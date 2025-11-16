@@ -1,0 +1,23 @@
+
+# Make this as .env file
+
+# Currency API (Your FastForex API)
+FASTFOREX_API_KEY=your_fastforex_api_key_here
+FASTFOREX_API_URL=https://api.fastforex.io/fetch-multi
+
+# Gmail Configuration
+EMAIL_SERVICE=gmail
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_app_password_here
+ALERT_EMAIL=recipient_email@gmail.com
+
+# Firebase Configuration (AFTER YOU ROTATE THE COMPROMISED KEY!)
+FIREBASE_PROJECT_ID=currency-tracker-uditha
+FIREBASE_PRIVATE_KEY_ID=your_new_private_key_id_here
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_NEW_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@currency-tracker-uditha.iam.gserviceaccount.com
+FIREBASE_CLIENT_ID=105964538863779966528
+FIREBASE_CLIENT_CERT_URL=https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40currency-tracker-uditha.iam.gserviceaccount.com
+
+# Server Configuration
+PORT=3000

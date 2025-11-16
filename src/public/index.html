@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Currency Tracker Dashboard</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #f5f5f5;
+        padding: 20px;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+      .card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+      }
+      .currency-card {
+        text-align: center;
+        border-left: 4px solid #007bff;
+      }
+      .currency-card.alert {
+        border-left-color: #dc3545;
+        background: #ffe6e6;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0% {
+          background-color: #ffe6e6;
+        }
+        50% {
+          background-color: #ffcccc;
+        }
+        100% {
+          background-color: #ffe6e6;
+        }
+      }
+      .currency-rate {
+        font-size: 2em;
+        font-weight: bold;
+        margin: 10px 0;
+      }
+      .currency-name {
+        color: #666;
+        font-size: 1.2em;
+      }
+      .threshold {
+        color: #888;
+        font-size: 0.9em;
+        margin: 5px 0;
+      }
+      .status {
+        font-size: 0.9em;
+        margin: 5px 0;
+        padding: 3px 8px;
+        border-radius: 12px;
+        display: inline-block;
+      }
+      .status.normal {
+        background: #d4edda;
+        color: #155724;
+      }
+      .status.alert {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .alert-badge {
+        background: #dc3545;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8em;
+        margin-top: 10px;
+        display: inline-block;
+      }
+
+      .controls {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      .button:hover {
+        background: #0056b3;
+      }
+      .button.refresh {
+        background: #28a745;
+      }
+      .button.refresh:hover {
+        background: #218838;
+      }
+
+      .history-section {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+      }
+      .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+      }
+      .history-table th,
+      .history-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+      }
+      .history-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+      }
+      .history-table tr:hover {
+        background: #f8f9fa;
+      }
+      .timestamp {
+        color: #666;
+        font-size: 0.9em;
+      }
+      .rate-value {
+        font-weight: bold;
+        color: #28a745;
+      }
+      .alert-row {
+        background: #fff5f5 !important;
+      }
+      .alert-row .rate-value {
+        color: #dc3545;
+      }
+
+      .connection-status {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        padding: 5px 10px;
+        border-radius: 5px;
+        z-index: 1000;
+        font-size: 0.9em;
+      }
+      .connected {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .connecting {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+      }
+      .disconnected {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .last-update {
+        margin-left: auto;
+        color: #666;
+        font-size: 0.9em;
+      }
+
+      .error {
+        color: #dc3545;
+        background: #f8d7da;
+        padding: 12px;
+        border-radius: 5px;
+        margin: 10px 0;
+      }
+
+      .status-info {
+        background: #e7f3ff;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+      }
+
+      .loading {
+        text-align: center;
+        color: #666;
+        padding: 20px;
+      }
+
+      .live-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: #28a745;
+        border-radius: 50%;
+        margin-right: 5px;
+        animation: blink 2s infinite;
+      }
+      @keyframes blink {
+        0%,
+        50% {
+          opacity: 1;
+        }
+        51%,
+        100% {
+          opacity: 0.3;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="connection-status connecting" id="connectionStatus">
+      Connecting...
+    </div>
+
+    <div class="container">
+      <div class="header">
+        <h1>Currency Exchange Tracker</h1>
+        <p>Real-time monitoring with threshold alerts</p>
+      </div>
+
+      <div class="status-info">
+        <h3>Live Monitoring</h3>
+        <p><strong>Currencies:</strong> USD, EUR, GBP vs LKR</p>
+        <p>
+          <strong>Connection:</strong>
+          <span id="liveIndicator"
+            ><span class="live-indicator"></span>Live</span
+          >
+        </p>
+        <p>
+          <strong>Alerts:</strong> Cards turn red when rates exceed thresholds
+        </p>
+      </div>
+
+      <div id="errorContainer"></div>
+
+      <div class="controls">
+        <button class="button refresh" onclick="fetchRealtimeRates()">
+          Fetch Latest Rates
+        </button>
+        <button class="button" onclick="loadRateHistory()">
+          Load Rate History
+        </button>
+        <span class="last-update" id="lastUpdate">Last update: Never</span>
+      </div>
+
+      <div class="cards" id="rates-cards">
+        <div class="loading">Loading thresholds and rates...</div>
+      </div>
+
+      <!-- New History Section -->
+      <div class="history-section">
+        <h2>Rate History (Latest 7 Records)</h2>
+        <div id="history-container">
+          <div class="loading">Click "Load Rate History" to view history</div>
+        </div>
+      </div>
+    </div>
+    <script>
+      // Global variables
+      let thresholds = {};
+      let eventSource;
+      let reconnectAttempts = 0;
+      const maxReconnectAttempts = 5;
+      const reconnectDelay = 3000;
+
+      // Load thresholds from backend
+      async function loadThresholds() {
+        try {
+          const response = await fetch("/api/current");
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          thresholds = await response.json();
+          return true;
+        } catch (error) {
+          showError("Failed to load thresholds from server");
+          return false;
+        }
+      }
+
+      // Connect to SSE
+      function connectSSE() {
+        updateConnectionStatus("connecting");
+        try {
+          eventSource = new EventSource("/api/events");
+          eventSource.onopen = function () {
+            updateConnectionStatus("connected");
+            reconnectAttempts = 0;
+          };
+          eventSource.onmessage = function (event) {
+            try {
+              const data = JSON.parse(event.data);
+              handleServerEvent(data);
+            } catch (error) {
+              console.error("Error parsing SSE data:", error);
+            }
+          };
+          eventSource.onerror = function (error) {
+            updateConnectionStatus("disconnected");
+            if (eventSource) eventSource.close();
+            if (reconnectAttempts < maxReconnectAttempts) {
+              reconnectAttempts++;
+              const delay = reconnectDelay * Math.pow(2, reconnectAttempts - 1);
+              setTimeout(() => connectSSE(), delay);
+            } else {
+              showError("Lost connection to server. Please refresh the page.");
+            }
+          };
+        } catch (error) {
+          updateConnectionStatus("disconnected");
+        }
+      }
+
+      function handleServerEvent(data) {
+        switch (data.type) {
+          case "connected":
+            showSuccess("Connected to live data stream");
+            break;
+          case "ratesUpdate":
+            updateRatesDisplay(data.data);
+            updateLastUpdate();
+            break;
+          case "alert":
+            playAlertSound();
+            break;
+          case "heartbeat":
+            break;
+        }
+      }
+
+      // Fetch and store new rates
+      async function fetchRealtimeRates() {
+        try {
+          showLoading("rates-cards", "Fetching latest rates...");
+          const response = await fetch("/api/fetch-realtime", {
+            method: "POST",
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const result = await response.json();
+          showSuccess("Rates fetched successfully!");
+          // Auto-load history after fetching new rates
+          loadRateHistory();
+        } catch (error) {
+          showError("Error fetching rates: " + error.message);
+        }
+      }
+
+      // Load rate history
+      async function loadRateHistory() {
+        try {
+          showLoading("history-container", "Loading rate history...");
+          const response = await fetch("/api/rates/history");
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const result = await response.json();
+          displayRateHistory(result.data);
+          showSuccess("Rate history loaded");
+        } catch (error) {
+          showError("Error loading rate history: " + error.message);
+        }
+      }
+
+      function updateRatesDisplay(ratesData) {
+        const cardsContainer = document.getElementById("rates-cards");
+        if (!ratesData || !ratesData.USD) {
+          cardsContainer.innerHTML =
+            '<div class="error">No rate data available</div>';
+          return;
+        }
+
+        const displayThresholds = ratesData.thresholds || thresholds;
+        const currencies = [
+          { code: "USD", name: "US Dollar" },
+          { code: "EUR", name: "Euro" },
+          { code: "GBP", name: "British Pound" },
+        ];
+
+        cardsContainer.innerHTML = currencies
+          .map((currency) => {
+            const rate = ratesData[currency.code];
+            const threshold = displayThresholds[currency.code];
+            const isAlert = threshold && rate > threshold;
+            const displayRate = rate ? rate.toFixed(2) + " LKR" : "N/A";
+            const displayThreshold = threshold
+              ? threshold + " LKR"
+              : "Loading...";
+            const difference = threshold ? rate - threshold : 0;
+
+            let cardClass = "card currency-card";
+            if (isAlert) cardClass += " alert";
+
+            return `
+              <div class="${cardClass}">
+                <div class="currency-name">${currency.name} (${
+              currency.code
+            })</div>
+                <div class="currency-rate">${displayRate}</div>
+                <div class="threshold">Alert Threshold: ${displayThreshold}</div>
+                <div class="status ${isAlert ? "alert" : "normal"}">
+                  ${isAlert ? "ABOVE THRESHOLD" : "NORMAL"}
+                </div>
+                ${
+                  isAlert
+                    ? `
+                  <div class="alert-badge">ALERT ACTIVE</div>
+                  <div style="margin-top: 8px; font-size: 0.8em; color: #dc3545;">
+                    Exceeds by ${difference.toFixed(2)} LKR
+                  </div>
+                `
+                    : ""
+                }
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      function displayRateHistory(historyData, type = "latest") {
+        const historyContainer = document.getElementById("history-container");
+
+        if (!historyData || historyData.length === 0) {
+          historyContainer.innerHTML =
+            '<div class="loading">No rate history found</div>';
+          return;
+        }
+
+        const isTimestampView = type === "timestamps";
+
+        let tableHTML = `
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Date & Time</th>
+          <th>USD (LKR)</th>
+          <th>EUR (LKR)</th>
+          <th>GBP (LKR)</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+        historyData.forEach((record, index) => {
+          // Timestamp is already a string from the service, use it directly!
+          const formattedTimestamp = record.timestamp || "Unknown Date";
+          const thresholds = record.thresholds || {};
+
+          const isUsdAlert = thresholds.USD && record.USD > thresholds.USD;
+          const isEurAlert = thresholds.EUR && record.EUR > thresholds.EUR;
+          const isGbpAlert = thresholds.GBP && record.GBP > thresholds.GBP;
+          const hasAnyAlert = isUsdAlert || isEurAlert || isGbpAlert;
+
+          const rowClass = hasAnyAlert ? "alert-row" : "";
+
+          // For timestamp view, show newest first. For latest view, show oldest first.
+          const displayIndex = isTimestampView
+            ? index + 1
+            : historyData.length - index;
+
+          tableHTML += `
+      <tr class="${rowClass}">
+        <td style="font-weight: bold; color: #666; text-align: center;">${displayIndex}</td>
+        <td class="timestamp">${formattedTimestamp}</td>
+        <td class="rate-value ${isUsdAlert ? "alert" : ""}">${
+            record.USD ? record.USD.toFixed(2) : "N/A"
+          }</td>
+        <td class="rate-value ${isEurAlert ? "alert" : ""}">${
+            record.EUR ? record.EUR.toFixed(2) : "N/A"
+          }</td>
+        <td class="rate-value ${isGbpAlert ? "alert" : ""}">${
+            record.GBP ? record.GBP.toFixed(2) : "N/A"
+          }</td>
+        <td>
+          ${
+            hasAnyAlert
+              ? '<span style="color: #dc3545; font-weight: bold;">🚨 ALERT</span>'
+              : '<span style="color: #28a745;">✅ Normal</span>'
+          }
+        </td>
+      </tr>
+    `;
+        });
+
+        const description = isTimestampView
+          ? "Showing latest 7 records by timestamp (1 = newest)"
+          : "Showing latest 7 records in chronological order (1 = oldest)";
+
+        tableHTML += `
+          </tbody>
+        </table>
+        <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+          ${description}
+        </div>
+      `;
+
+        historyContainer.innerHTML = tableHTML;
+      }
+
+      function playAlertSound() {
+        try {
+          const context = new (window.AudioContext ||
+            window.webkitAudioContext)();
+
+          function playBeep(startTime, frequency) {
+            const oscillator = context.createOscillator();
+            const gainNode = context.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(context.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = "sine";
+
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.2);
+
+            oscillator.start(startTime);
+            oscillator.stop(startTime + 0.2);
+          }
+
+          playBeep(context.currentTime, 800);
+          playBeep(context.currentTime + 0.25, 600);
+        } catch (error) {
+          console.log("Audio not supported");
+        }
+      }
+
+      function updateConnectionStatus(status) {
+        const statusElement = document.getElementById("connectionStatus");
+        const liveIndicator = document.getElementById("liveIndicator");
+        switch (status) {
+          case "connected":
+            statusElement.textContent = "Live Connected";
+            statusElement.className = "connection-status connected";
+            liveIndicator.innerHTML =
+              '<span class="live-indicator"></span>Live';
+            break;
+          case "disconnected":
+            statusElement.textContent = "Disconnected";
+            statusElement.className = "connection-status disconnected";
+            liveIndicator.innerHTML = "Offline";
+            break;
+          case "connecting":
+            statusElement.textContent = "Connecting...";
+            statusElement.className = "connection-status connecting";
+            liveIndicator.innerHTML = "Connecting...";
+            break;
+        }
+      }
+
+      function updateLastUpdate() {
+        const now = new Date();
+        document.getElementById(
+          "lastUpdate"
+        ).textContent = `Last update: ${now.toLocaleTimeString()}`;
+      }
+
+      function showLoading(containerId, message) {
+        document.getElementById(
+          containerId
+        ).innerHTML = `<div class="loading">${message}</div>`;
+      }
+
+      function showError(message) {
+        const errorContainer = document.getElementById("errorContainer");
+        errorContainer.innerHTML = `<div class="error">${message}</div>`;
+        setTimeout(() => (errorContainer.innerHTML = ""), 5000);
+      }
+
+      function showSuccess(message) {
+        const errorContainer = document.getElementById("errorContainer");
+        errorContainer.innerHTML = `<div style="background: #d4edda; color: #155724; padding: 12px; border-radius: 5px;">${message}</div>`;
+        setTimeout(() => (errorContainer.innerHTML = ""), 3000);
+      }
+
+      // Initialize when page loads
+      document.addEventListener("DOMContentLoaded", async function () {
+        const thresholdsLoaded = await loadThresholds();
+        if (thresholdsLoaded) {
+          connectSSE();
+          // Auto-load history on page load
+          loadRateHistory();
+        }
+      });
+    </script>
+  </body>
+</html>
