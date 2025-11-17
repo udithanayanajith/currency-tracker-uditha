@@ -1,6 +1,10 @@
 [build]
 builder = "nixpacks"
-buildCommand = "echo 'Building Node.js application'"
 
 [deploy]
-startCommand = "npm start"
+startCommand = "node src/app.js"
+
+[nixpacks]
+plan = [
+  { type = "nodejs" }
+]
