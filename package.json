@@ -8,10 +8,6 @@
     "dev": "nodemon src/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "engines": {
-    "node": "18.x",
-    "npm": "9.x"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/udithanayanajith/currency-tracker-uditha.git"
