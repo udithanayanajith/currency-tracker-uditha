@@ -1,0 +1,6 @@
+[build]
+builder = "nixpacks"
+buildCommand = "echo 'Building Node.js application'"
+
+[deploy]
+startCommand = "npm start"
