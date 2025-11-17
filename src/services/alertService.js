@@ -2,7 +2,7 @@ const { sendAlertEmail } = require("./emailService");
 
 const thresholds = {
   USD: 330,
-  EUR: 770,
+  EUR: 780,
   GBP: 50,
 };
 
