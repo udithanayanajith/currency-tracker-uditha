@@ -24,7 +24,7 @@ const sseClients = new Set();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "../public")));
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api/rates", ratesRoutes);
 app.get("/favicon.ico", (req, res) => {
@@ -126,7 +126,7 @@ app.post("/webhook/alert", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "/public/index.html"));
+  res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
 async function updateLatestData(rates) {
@@ -156,7 +156,7 @@ app.post("/api/fetch-realtime", async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    
+
     res.status(500).json({ error: error.message });
   }
 });
@@ -211,7 +211,7 @@ app.listen(PORT, async () => {
     await updateLatestData(storedRates);
   } catch (error) {
     console.log(error);
-    
+
     console.log("Initial rate fetch failed, will retry on schedule");
   }
 });
