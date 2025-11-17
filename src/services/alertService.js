@@ -1,16 +1,16 @@
 const { sendAlertEmail } = require("./emailService");
 
-const thresholds = {
-  USD: 330,
-  EUR: 780,
-  GBP: 50,
-};
-
 // const thresholds = {
 //   USD: 330,
-//   EUR: 370,
-//   GBP: 420,
+//   EUR: 780,
+//   GBP: 50,
 // };
+
+const thresholds = {
+  USD: 330,
+  EUR: 370,
+  GBP: 420,
+};
 
 async function checkThresholds(rates) {
   for (const [currency, rate] of Object.entries(rates)) {
